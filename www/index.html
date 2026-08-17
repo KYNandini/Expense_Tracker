@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description"
+        content="Track your daily income and expenses, manage categories, and visualize spending patterns with beautiful charts." />
+    <meta name="theme-color" content="#080c14" />
+    <title>SpendSmart — Expense Tracker</title>
+
+    <!-- Preconnect for faster font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+    <!-- ══════════════════════════════════════════════════════════════
+     TOAST CONTAINER
+     ══════════════════════════════════════════════════════════════ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+     AUTH SCREEN
+     ══════════════════════════════════════════════════════════════ -->
+    <div id="auth-screen">
+
+        <!-- Logo -->
+        <div class="auth-logo">
+            <div class="auth-logo-icon">💸</div>
+            <h1>SpendSmart</h1>
+            <p>Your personal finance companion</p>
+        </div>
+
+        <!-- Auth Card -->
+        <div class="auth-card">
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login" id="tab-login">Sign In</button>
+                <button class="auth-tab" data-tab="register" id="tab-register">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <form class="auth-form" id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="login-username" placeholder="Enter your username" autocomplete="username"
+                            required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="login-password" placeholder="Enter your password"
+                            autocomplete="current-password" required />
+                    </div>
+                </div>
+                <div class="error-msg" id="login-error"></div>
+                <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+            </form>
+
+            <!-- Register Form -->
+            <form class="auth-form hidden" id="register-form">
+                <div class="form-group">
+                    <label for="reg-name">Full Name</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">✨</span>
+                        <input type="text" id="reg-name" placeholder="Your full name" autocomplete="name" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reg-username">Username</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="reg-username" placeholder="Choose a username" autocomplete="username"
+                            required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="reg-password" placeholder="Min. 6 characters"
+                            autocomplete="new-password" required />
+                    </div>
+                </div>
+                <div class="error-msg" id="register-error"></div>
+                <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+            </form>
+
+        </div><!-- /.auth-card -->
+    </div><!-- /#auth-screen -->
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+     MAIN APP
+     ══════════════════════════════════════════════════════════════ -->
+    <div id="app-container">
+        <div id="main-app">
+
+            <!-- ── Header ─────────────────────────────────────────────────────────── -->
+            <header class="app-header">
+                <div class="header-brand">
+                    <div class="header-brand-icon">💸</div>
+                    <span>SpendSmart</span>
+                </div>
+                <div class="header-actions">
+                    <div class="header-greeting">Hi, <strong id="header-name">User</strong></div>
+                    <button class="btn-icon" id="btn-logout" title="Sign Out" style="font-size:16px;">🚪</button>
+                </div>
+            </header>
+
+            <!-- ── Pages Container ────────────────────────────────────────────────── -->
+            <div class="pages-container">
+
+                <!-- ╔══════════════════════════════════╗
+         ║  PAGE: DASHBOARD                 ║
+         ╚══════════════════════════════════╝ -->
+                <div class="page active" id="page-dashboard">
+
+                    <!-- Balance Card -->
+                    <div class="balance-card">
+                        <div class="balance-label">Total Balance</div>
+                        <div class="balance-amount" id="dash-balance">₹0.00</div>
+                        <div class="balance-month" id="dash-balance-month"></div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="summary-cards">
+                        <div class="summary-card income-card">
+                            <div class="summary-card-icon">📈</div>
+                            <div class="summary-card-label">Income</div>
+                            <div class="summary-card-amount" id="dash-income">₹0</div>
+                        </div>
+                        <div class="summary-card expense-card">
+                            <div class="summary-card-icon">📉</div>
+                            <div class="summary-card-label">Expenses</div>
+                            <div class="summary-card-amount" id="dash-expense">₹0</div>
+                        </div>
+                    </div>
+
+                    <!-- Spending Breakdown Chart -->
+                    <div class="card" style="margin-bottom:20px;">
+                        <div class="section-header">
+                            <span class="section-title">Spending Breakdown</span>
+                            <span style="font-size:11px;color:var(--text-muted);">This month</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="dash-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div class="section-header">
+                        <span class="section-title">Recent Transactions</span>
+                        <button class="section-link" onclick="navigateTo('transactions')">See all →</button>
+                    </div>
+                    <div class="tx-list" id="dash-recent"></div>
+
+                    <div class="scroll-gap"></div>
+                </div><!-- /#page-dashboard -->
+
+
+                <!-- ╔══════════════════════════════════╗
+         ║  PAGE: TRANSACTIONS              ║
+         ╚══════════════════════════════════╝ -->
+                <div class="page" id="page-transactions">
+                    <h2 class="page-title">Transactions</h2>
+                    <p class="page-subtitle">All your income &amp; expenses</p>
+
+                    <!-- Search -->
+                    <div class="search-bar">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="tx-search" placeholder="Search transactions…" />
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="filter-row">
+                        <button class="filter-chip active" data-filter="all">All</button>
+                        <button class="filter-chip" data-filter="income">Income</button>
+                        <button class="filter-chip" data-filter="expense">Expenses</button>
+                    </div>
+
+                    <!-- List -->
+                    <div class="tx-list" id="tx-list-container"></div>
+
+                    <div class="scroll-gap"></div>
+                </div><!-- /#page-transactions -->
+
+
+                <!-- ╔══════════════════════════════════╗
+         ║  PAGE: CATEGORIES                ║
+         ╚══════════════════════════════════╝ -->
+                <div class="page" id="page-categories">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                        <h2 class="page-title" style="margin-bottom:0;">Categories</h2>
+                        <button class="btn btn-glass" id="btn-add-cat" style="font-size:13px;padding:8px 14px;">+
+                            Add</button>
+                    </div>
+                    <p class="page-subtitle">Manage your spending categories</p>
+
+                    <!-- Expense Categories -->
+                    <div class="section-header" style="margin-bottom:10px;">
+                        <span class="section-title">💸 Expense</span>
+                    </div>
+                    <div class="category-grid" id="cat-expense-grid" style="margin-bottom:20px;"></div>
+
+                    <!-- Income Categories -->
+                    <div class="section-header" style="margin-bottom:10px;">
+                        <span class="section-title">💰 Income</span>
+                    </div>
+                    <div class="category-grid" id="cat-income-grid"></div>
+
+                    <div class="scroll-gap"></div>
+                </div><!-- /#page-categories -->
+
+
+                <!-- ╔══════════════════════════════════╗
+         ║  PAGE: REPORTS                   ║
+         ╚══════════════════════════════════╝ -->
+                <div class="page" id="page-reports">
+                    <h2 class="page-title">Monthly Report</h2>
+                    <p class="page-subtitle">Detailed breakdown of your finances</p>
+
+                    <!-- Month Picker -->
+                    <div class="month-picker">
+                        <button class="month-nav-btn" id="report-prev-month">‹</button>
+                        <span class="month-picker-label" id="report-month-label">—</span>
+                        <button class="month-nav-btn" id="report-next-month">›</button>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="report-summary-row">
+                            <span class="report-summary-label">📈 Total Income</span>
+                            <span class="report-summary-value" style="color:var(--accent-green);"
+                                id="report-income">₹0.00</span>
+                        </div>
+                        <div class="report-summary-row">
+                            <span class="report-summary-label">📉 Total Expenses</span>
+                            <span class="report-summary-value" style="color:var(--accent-red);"
+                                id="report-expense">₹0.00</span>
+                        </div>
+                        <div class="report-summary-row">
+                            <span class="report-summary-label">💼 Net Savings</span>
+                            <span class="report-summary-value" id="report-net">₹0.00</span>
+                        </div>
+                        <div class="report-summary-row">
+                            <span class="report-summary-label">📊 Transactions</span>
+                            <span class="report-summary-value" id="report-tx-count">0</span>
+                        </div>
+                        <div style="margin-top:12px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-size:12px;color:var(--text-muted);">Savings Rate</span>
+                                <span style="font-size:12px;font-weight:700;color:var(--accent-green);"
+                                    id="report-savings-pct">0%</span>
+                            </div>
+                            <div class="savings-bar-wrap">
+                                <div class="savings-bar-fill" id="report-savings-bar" style="width:0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Spending Line Chart -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="section-title" style="margin-bottom:14px;">📅 Daily Overview</div>
+                        <div class="chart-container">
+                            <canvas id="report-daily-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Category Breakdown -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="section-title" style="margin-bottom:14px;">🏷️ By Category</div>
+                        <div class="chart-container" style="height:200px;">
+                            <canvas id="report-cat-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Categories -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="section-title" style="margin-bottom:14px;">🔥 Top Spending</div>
+                        <div id="report-top-cats"></div>
+                    </div>
+
+                    <div class="scroll-gap"></div>
+                </div><!-- /#page-reports -->
+
+
+                <!-- ╔══════════════════════════════════╗
+         ║  PAGE: ANALYTICS                 ║
+         ╚══════════════════════════════════╝ -->
+                <div class="page" id="page-analytics">
+                    <h2 class="page-title">Analytics</h2>
+                    <p class="page-subtitle">Insights into your spending habits</p>
+
+                    <!-- Stat Grid -->
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Net Balance</div>
+                            <div class="stat-value" id="an-balance">₹0</div>
+                            <div class="stat-sub">All time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Avg Daily Spend</div>
+                            <div class="stat-value" id="an-avg-daily">₹0</div>
+                            <div class="stat-sub">This month</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Transactions</div>
+                            <div class="stat-value" id="an-total-tx">0</div>
+                            <div class="stat-sub">All time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Savings Rate</div>
+                            <div class="stat-value" id="an-savings" style="color:var(--accent-green);">0%</div>
+                            <div class="stat-sub">All time</div>
+                        </div>
+                    </div>
+
+                    <!-- Savings Bar -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <span class="section-title">💚 Savings Progress</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                            <div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">This Month Income
+                                </div>
+                                <div style="font-size:18px;font-weight:800;color:var(--accent-green);"
+                                    id="an-this-income">₹0</div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">This Month
+                                    Expenses</div>
+                                <div style="font-size:18px;font-weight:800;color:var(--accent-red);"
+                                    id="an-this-expense">₹0</div>
+                            </div>
+                        </div>
+                        <div class="savings-bar-wrap">
+                            <div class="savings-bar-fill" id="an-savings-bar" style="width:0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- 6-Month Trend -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="section-title" style="margin-bottom:14px;">📈 6-Month Trend</div>
+                        <div class="chart-container" style="height:220px;">
+                            <canvas id="an-trend-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Categories (all time) -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="section-title" style="margin-bottom:14px;">🏆 Top Spending (All Time)</div>
+                        <div id="an-top-cats"></div>
+                    </div>
+
+                    <div class="scroll-gap"></div>
+                </div><!-- /#page-analytics -->
+
+            </div><!-- /.pages-container -->
+
+            <!-- ── Bottom Navigation ───────────────────────────────────────────── -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Home</span>
+                </button>
+                <button class="nav-item" data-page="transactions">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-label">Transactions</span>
+                </button>
+                <button class="nav-item" data-page="categories">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-label">Categories</span>
+                </button>
+                <button class="nav-item" data-page="reports">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Reports</span>
+                </button>
+                <button class="nav-item" data-page="analytics">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-label">Analytics</span>
+                </button>
+            </nav>
+
+        </div><!-- /#main-app -->
+    </div><!-- /#app-container -->
+
+    <!-- ── Floating Action Button ─────────────────────────────────────────── -->
+    <button class="fab" id="fab-add" title="Add Transaction">＋</button>
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+     TRANSACTION MODAL
+     ══════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="tx-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title" id="tx-modal-title">Add Transaction</h2>
+
+            <form id="tx-form" onsubmit="return false;">
+
+                <!-- Type Toggle -->
+                <div class="type-toggle">
+                    <button type="button" class="type-btn active-expense" id="type-expense-btn">📉 Expense</button>
+                    <button type="button" class="type-btn" id="type-income-btn">📈 Income</button>
+                </div>
+
+                <!-- Amount -->
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label for="tx-amount">Amount (₹)</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">₹</span>
+                        <input type="number" id="tx-amount" placeholder="0.00" step="0.01" min="0.01"
+                            inputmode="decimal" required />
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label for="tx-description">Description (optional)</label>
+                    <input type="text" id="tx-description" placeholder="e.g. Lunch at restaurant" />
+                </div>
+
+                <!-- Date -->
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label for="tx-date">Date</label>
+                    <input type="date" id="tx-date" />
+                </div>
+
+                <!-- Category -->
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label>Category</label>
+                    <div class="cat-select-grid" id="tx-cat-grid"></div>
+                </div>
+
+            </form>
+
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="tx-delete-btn" style="display:none;">🗑️ Delete</button>
+                <button class="btn btn-glass" onclick="closeModal('tx-modal')">Cancel</button>
+                <button class="btn btn-primary" id="btn-save-tx">Save</button>
+            </div>
+        </div>
+    </div><!-- /#tx-modal -->
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+     CATEGORY MODAL
+     ══════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="cat-modal">
+        <div class="modal">
+            <div class="modal-handle"></div>
+            <h2 class="modal-title" id="cat-modal-title">Add Category</h2>
+
+            <form id="cat-form" onsubmit="return false;">
+
+                <div class="form-row" style="margin-bottom:14px;">
+                    <div class="form-group">
+                        <label for="cat-name">Name</label>
+                        <input type="text" id="cat-name" placeholder="e.g. Gym" />
+                    </div>
+                    <div class="form-group">
+                        <label for="cat-type-select">Type</label>
+                        <select id="cat-type-select">
+                            <option value="expense">Expense</option>
+                            <option value="income">Income</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:14px;">
+                    <label>Color</label>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <input type="color" id="cat-color" value="#7c3aed"
+                            style="width:52px;height:40px;border:none;border-radius:10px;cursor:pointer;background:none;padding:2px;" />
+                        <span style="font-size:12px;color:var(--text-muted);">Pick a color for your category</span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label>Icon</label>
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                        <div style="font-size:32px;width:52px;height:52px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;display:flex;align-items:center;justify-content:center;"
+                            id="cat-emoji-selected">🎯</div>
+                        <span style="font-size:12px;color:var(--text-muted);">Selected emoji</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-height:120px;overflow-y:auto;"
+                        id="cat-emoji-grid"></div>
+                </div>
+
+            </form>
+
+            <div class="modal-actions">
+                <button class="btn btn-glass" onclick="closeModal('cat-modal')">Cancel</button>
+                <button class="btn btn-primary" id="btn-save-cat">Create</button>
+            </div>
+        </div>
+    </div><!-- /#cat-modal -->
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+     SCRIPTS (order matters: db → auth → charts → app)
+     ══════════════════════════════════════════════════════════════ -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="db.js?v=2"></script>
+    <script src="auth.js?v=2"></script>
+    <script src="charts.js?v=2"></script>
+    <script src="app.js?v=2"></script>
+
+</body>
+
+</html>
